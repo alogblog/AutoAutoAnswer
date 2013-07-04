@@ -1,7 +1,7 @@
 Auto AutoAnswer
 ==============
 
-Open Source Android App forked from Google Code()
+**Auto AutoAnswer** is an open sourced Android app forked from **AutoAnswer**.
 
 
 First, I introduce the **AutoAnswer** Android app, which is open source project hosted in [Google Code](https://code.google.com/p/auto-answer/).
