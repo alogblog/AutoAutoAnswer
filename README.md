@@ -15,4 +15,4 @@ My modification is just only one Receiver class, so my knowledge about original 
 If this app is not working on your device, then that' the end. :( You shoud find another good apps.
 
 
-If you use an automation app like Tasker or Locale, you can get my related free app in PlayStore.
+If you use an automation app like Tasker or Locale, you can get my related free plugin in PlayStore.
