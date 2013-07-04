@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="which_contacts">
+        <item>모든 전화 다 받기</item>
+        <item>주소록의 전화만 받기</item>
+        <item>별표된 전화만 받기</item>
+    </string-array>
+    <string-array name="which_contacts_values">
+        <item>all</item>
+        <item>contacts</item>
+        <item>starred</item>
+    </string-array>
+    <string-array name="delay">
+        <item>2초 후</item>
+        <item>4초 후</item>
+        <item>6초 후 </item>
+        <item>8초 후 </item>
+        <item>10초 후 </item>
+        <item>12초 후 </item>
+    </string-array>
+    <string-array name="delay_values">
+        <item>2</item>
+        <item>4</item>
+        <item>6</item>
+        <item>8</item>
+        <item>10</item>
+        <item>12</item>
+    </string-array>
+
+</resources>
