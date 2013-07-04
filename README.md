@@ -1,4 +1,4 @@
-AutoAutoAnswer
+Auto AutoAnswer
 ==============
 
 Open Source Android App forked from Google Code()
