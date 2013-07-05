@@ -28,8 +28,8 @@ If you use an automation app like Tasker or Locale, you can get my related free 
   - Only starred contacts
 - Can specify the **delay seconds** before auto answering, ex.) 2, 4, 6, 8, 10, 12 secs.
 - Can turn on the **speakphone** when auto answering.
-- Can use auto answering only when connected to Bluetooth headset.
-- Can select not to auto answer if in call.
+- Can use auto answering only when connected to **Bluetooth headset**.
+- Can select not to auto answer **if in call**.
 
 ##Authors
 
