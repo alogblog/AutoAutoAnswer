@@ -30,6 +30,7 @@ If you use an automation app like Tasker or Locale, you can get my related free 
 - Can turn on the **speakphone** when auto answering.
 - Can use auto answering only when connected to **Bluetooth headset**.
 - Can select not to auto answer **if in call**.
+- Can **automize those features** on Tasker or Locale apps by using a plugin.
 
 ##Authors
 
