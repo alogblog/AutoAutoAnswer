@@ -30,6 +30,7 @@ public class AutoAnswerPreferenceActivity extends PreferenceActivity implements 
 
 	private AutoAnswerNotifier mNotifier;
 	
+	@SuppressWarnings("deprecation")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -40,6 +41,7 @@ public class AutoAnswerPreferenceActivity extends PreferenceActivity implements 
 		addPreferencesFromResource(R.xml.preferences);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	protected void onDestroy() {
 		getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);

@@ -35,34 +35,99 @@ package com.alogblog.aaa;
  */
 
 import java.lang.reflect.Method;
+import java.util.List;
+
 import com.android.internal.telephony.ITelephony;
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.IntentService;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothHeadset;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.KeyEvent;
 
 public class AutoAnswerIntentService extends IntentService {
+	private static final String TAG = "AutoAnswerIntentService";
+
+	// from Honeycomb.
+	private BluetoothHeadset mBluetoothHeadset;
+	private BluetoothAdapter mBluetoothAdapter;
+	private Object mProfileListenerObject;
+	// for below Honeycomb.
+	private com.alogblog.aaa.BluetoothHeadset mBluetoothHeadset4Old;
+	private boolean mHeadsetOnly = false;
+	
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	@Override
+	public void onCreate() {
+		Context context = getBaseContext();
+	
+		super.onCreate();
+		
+		// Load preferences
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		mHeadsetOnly = prefs.getBoolean("headset_only", false);
+	
+		if (mHeadsetOnly && Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ) {
+			Log.d(TAG, "onCreate/HONEYCOMB.");
+			mProfileListenerObject = (BluetoothProfile.ServiceListener)new BluetoothProfile.ServiceListener() {
+			    public void onServiceConnected(int profile, BluetoothProfile proxy) {
+			        if (profile == BluetoothProfile.HEADSET) {
+			            mBluetoothHeadset = (BluetoothHeadset) proxy;
+			        	Log.d(TAG, "onCreate/HONEYCOMB/onServiceConnected.");
+			        }
+			    }
+			    public void onServiceDisconnected(int profile) {
+			        if (profile == BluetoothProfile.HEADSET) {
+			            mBluetoothHeadset = null;
+			            Log.d(TAG, "onCreate/HONEYCOMB/onServiceDisconnected.");
+			        }
+			    }
+			};	
+		}
+	}
 
 	public AutoAnswerIntentService() {
 		super("AutoAnswerIntentService");
 	}
 
+	@SuppressLint("NewApi")
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		Context context = getBaseContext();
-
+		List<BluetoothDevice> btDevices;
+		boolean returnNow = false;
+		
 		// Load preferences
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		BluetoothHeadset bh = null;
-		if (prefs.getBoolean("headset_only", false)) {
-			bh = new BluetoothHeadset(this, null);
+		
+		if ( mHeadsetOnly ) {
+			if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ) {
+				mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+				if( mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() ) {
+					mBluetoothAdapter.getProfileProxy(this, (BluetoothProfile.ServiceListener)mProfileListenerObject, BluetoothProfile.HEADSET);
+					Log.d(TAG, "onHandleIntent/getProfileProxy.");
+				}
+				else {
+					Log.d(TAG, "onHandleIntent/No BT adapter or deactivated.");
+					return;
+				}
+			}
+			else {
+				mBluetoothHeadset4Old = new com.alogblog.aaa.BluetoothHeadset(this, null);
+				Log.d(TAG, "onHandleIntent/aaa.BluetoothHeadset.");
+			}
 		}
-
+		
 		// Let the phone ring for a set delay
 		try {
 			Thread.sleep(Integer.parseInt(prefs.getString("delay", "2")) * 1000);
@@ -71,27 +136,64 @@ public class AutoAnswerIntentService extends IntentService {
 		}
 
 		// Check headset status right before picking up the call
-		if (prefs.getBoolean("headset_only", false) && bh != null) {
-			if (bh.getState() != BluetoothHeadset.STATE_CONNECTED) {
-				bh.close();
-				return;
+		if ( mHeadsetOnly ) {
+			if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ) {
+				String logMessage = "";
+				if ( mBluetoothAdapter.isEnabled() == false || mBluetoothHeadset == null ) {
+					returnNow = true;
+					logMessage = "onHandleIntent/closeProfileProxy/During waiting for answering, BT may be disabled.";
+				}
+				else {
+					btDevices = mBluetoothHeadset.getConnectedDevices();
+					if ( btDevices.isEmpty() ) {
+						returnNow = true;
+						logMessage = "onHandleIntent/closeProfileProxy/No connected BT devices.";
+					}
+					else if ( mBluetoothHeadset.getConnectionState(btDevices.get(0)) != BluetoothProfile.STATE_CONNECTED)  {
+						returnNow = true;
+						logMessage = "onHandleIntent/closeProfileProxy/No connected headset.";
+					}
+				}
+				
+				mBluetoothAdapter.closeProfileProxy(BluetoothProfile.HEADSET, mBluetoothHeadset);
+				
+				if( returnNow ) {
+					Log.d(TAG, logMessage);
+					return;
+				}
+	            Log.d(TAG, "onHandleIntent/closeProfileProxy/Headset connected.");
 			}
-			bh.close();
+			else {
+				if ( mBluetoothHeadset4Old != null ) {
+					try {
+						if ( mBluetoothHeadset4Old.isConnected(mBluetoothHeadset4Old.getCurrentHeadset()) == false ) {
+							mBluetoothHeadset4Old.close();
+							return;
+						}
+						mBluetoothHeadset4Old.close();
+					} catch(Exception e) {
+						Log.e(TAG, "onHandleIntent/mBluetoothHeadset4Old : " + e.toString());
+						return;
+					}
+				}
+			}
 		}
-
+		
 		// Make sure the phone is still ringing
 		TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 		if (tm.getCallState() != TelephonyManager.CALL_STATE_RINGING) {
+			Log.d(TAG, "onHandleIntent/NO CALL_STATE_RINGING.");
 			return;
 		}
-
+		
 		// Answer the phone
 		try {
 			answerPhoneAidl(context);
+			Log.d(TAG,"Until Android 2.2");			
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-			Log.d("AutoAnswer","Error trying to answer using telephony service.  Falling back to headset.");
+			Log.d(TAG,"From Android 2.3, Error trying to answer using telephony service.  Falling back to headset.");
 			answerPhoneHeadsethook(context);
 		}
 
@@ -119,7 +221,7 @@ public class AutoAnswerIntentService extends IntentService {
 		context.sendOrderedBroadcast(buttonUp, "android.permission.CALL_PRIVILEGED");
 	}
 
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void answerPhoneAidl(Context context) throws Exception {
 		// Set up communication with the telephony service (thanks to Tedd's Droid Tools!)
 		TelephonyManager tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);

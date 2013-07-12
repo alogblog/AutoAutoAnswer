@@ -52,6 +52,7 @@ public class AutoAnswerNotifier {
 		}		
 	}
 	
+	@SuppressWarnings("deprecation")
 	private void enableNotification() {
 		// Intent to call to turn off AutoAnswer
 		Intent notificationIntent = new Intent(mContext, AutoAnswerPreferenceActivity.class);

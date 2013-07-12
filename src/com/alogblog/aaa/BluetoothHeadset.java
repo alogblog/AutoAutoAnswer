@@ -35,6 +35,7 @@ package com.alogblog.aaa;
  *   limitations under the License.
  */
 
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.IBluetoothHeadset;
 import android.content.ComponentName;
 import android.content.Context;
@@ -124,21 +125,38 @@ public final class BluetoothHeadset {
     }
 
     /**
-     * Get the current state of the Bluetooth Headset service.
-     * @return One of the STATE_ return codes, or STATE_ERROR if this proxy
-     *         object is currently not connected to the Headset service.
+     * Get the BluetoothDevice for the current headset.
+     * @return current headset, or null if not in connected or connecting
+     *         state, or if this proxy object is not connected to the Headset
+     *         service.
      */
-    public int getState() {
+    public BluetoothDevice getCurrentHeadset() {
         if (mService != null) {
             try {
-                return mService.getState();
+                return mService.getCurrentHeadset();
             } catch (RemoteException e) {Log.e(TAG, e.toString());}
         } else {
             Log.w(TAG, "Proxy not attached to service");
         }
-        return BluetoothHeadset.STATE_ERROR;
+        return null;
     }
-
+    
+    /**
+     * Returns true if the specified headset is connected (does not include
+     * connecting). Returns false if not connected, or if this proxy object
+     * if not currently connected to the headset service.
+     */
+    public boolean isConnected(BluetoothDevice device) {
+        if (mService != null) {
+            try {
+                return mService.isConnected(device);
+            } catch (RemoteException e) {Log.e(TAG, e.toString());}
+        } else {
+            Log.w(TAG, "Proxy not attached to service");
+        }
+        return false;
+    }  
+    
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
             mService = IBluetoothHeadset.Stub.asInterface(service);
